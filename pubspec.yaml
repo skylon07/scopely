@@ -1,5 +1,5 @@
 name: async_scope
-description: A starting point for Dart libraries or applications.
+description: A lightweight concurrency toolset to manage asynchronous tasks in dart.
 version: 0.1.0
 repository: https://github.com/skylon07/async_scope
 
@@ -7,7 +7,9 @@ environment:
   sdk: ^3.7.2
 
 dependencies:
-  # path: ^1.8.0
+  # should NOT depend on flutter or flutter-dependent packages;
+  # this package should be usable by pure dart applications
+  # flutter: ...
 
 dev_dependencies:
   lints: ^5.0.0
