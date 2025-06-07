@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:async_scope/src/stream_utils.dart';
 
-// TODO-NOW: refactor similar methods into a CancelableTask
 // TODO: implement nesting scopes
 class AsyncScope {
   final _tasksToCancel = <_CancelableTask>{};
