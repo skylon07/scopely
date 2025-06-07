@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:meta/meta.dart';
 
 extension StreamUtils<EventT> on Stream<EventT> {
   Stream<Future<EventT>> asFutures() => transform(_AsFuturesTransformer());
@@ -76,12 +75,17 @@ abstract base class StreamLifecycleTransformer<SourceT, DestT> implements Stream
         onCancel: onCancel,
       );
     }
+
+    onBind(compileContext());
+
     return destController.stream;
   }
   
   @override
   StreamTransformer<RS, RT> cast<RS, RT>() =>
     StreamTransformer.castFrom<SourceT, DestT, RS, RT>(this);
+
+  void onBind(TransformerContext<SourceT, DestT> context) {}
 
   StreamSubscription<SourceT>? destOnListen(TransformerContext<SourceT, DestT> context) {
     return context.sourceStream.listen(
