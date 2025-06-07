@@ -2,8 +2,13 @@ import 'dart:async';
 
 import 'package:async_scope/src/stream_utils.dart';
 
-// TODO: implement nesting scopes
 class AsyncScope {
+  final _children = <AsyncScope>[];
+
+  AsyncScope([AsyncScope? parent]) {
+    parent?._children.add(this);
+  }
+
   final _tasksToCancel = <_CancelableTask>{};
   var _isCanceled = false;
 
@@ -18,6 +23,11 @@ class AsyncScope {
       task.cancel();
     }
     _tasksToCancel.clear();
+
+    for (var childScope in _children) {
+      childScope.cancelAll();
+    }
+
     _isCanceled = true;
   }
 
