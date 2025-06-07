@@ -2,28 +2,7 @@ import 'dart:async';
 import 'package:meta/meta.dart';
 
 extension StreamUtils<EventT> on Stream<EventT> {
-  Stream<ForwardT> forwardingStream<ForwardT>(StreamLifecycleHooks<EventT, ForwardT> hooks) {
-    StreamController<ForwardT> destController;
-    if (isBroadcast) {
-      destController = StreamController.broadcast(
-        onListen: hooks.destOnListen,
-        onCancel: hooks.destOnCancel,
-      );
-    } else {
-      destController = StreamController(
-        onListen: hooks.destOnListen,
-        onPause: hooks.destOnPause,
-        onResume: hooks.destOnResume,
-        onCancel: hooks.destOnCancel,
-      );
-    }
-
-    hooks._initialize(stream: this, destController: destController);
-
-    return destController.stream;
-  }
-
-  Stream<Future<EventT>> asFutures() => forwardingStream(_AsFuturesLifecycleHooks());   
+  Stream<Future<EventT>> asFutures() => transform(_AsFuturesTransformer());
 }
 
 // TODO: modify and use this docstring for asFutures()
@@ -50,89 +29,117 @@ extension StreamUtils<EventT> on Stream<EventT> {
   /// }
   /// ```
 
+typedef TransformerContext<SourceT, DestT> = ({
+  Stream<SourceT> sourceStream, 
+  StreamSubscription<SourceT>? sourceSubscription,
+  StreamController<DestT> destController
+});
 
-abstract base class StreamLifecycleHooks<EventT, ForwardT> {
-  late final Stream<EventT> _sourceStream;
-  Stream<EventT> get sourceStream => _sourceStream;
+abstract base class StreamLifecycleTransformer<SourceT, DestT> implements StreamTransformer<SourceT, DestT> {
+  @override
+  Stream<DestT> bind(Stream<SourceT> sourceStream) {
+    StreamSubscription<SourceT>? sourceSubscription;
+    late StreamController<DestT> destController;
 
-  StreamSubscription? _sourceSubscription;
-  StreamSubscription? get sourceSubscription => _sourceSubscription;
+    TransformerContext<SourceT, DestT> compileContext() => (
+      sourceStream: sourceStream, 
+      destController: destController,
+      sourceSubscription: sourceSubscription,
+    );
 
-  late final StreamController<ForwardT> _destController;
-  StreamController<ForwardT> get destController => _destController;
+    void onListen() {
+      sourceSubscription = destOnListen(compileContext());
+    }
 
-  bool _initialized = false;
+    FutureOr<void> onCancel() async {
+      sourceSubscription = await destOnCancel(compileContext());
+    }
 
-  void _initialize({
-    required Stream<EventT> stream, 
-    required StreamController<ForwardT> destController
-  }) {
-    if (_initialized) throw StateError("Hooks have already been used");
+    void onPause() {
+      destOnPause(compileContext());
+    }
 
-    this._sourceStream = stream;
-    this._destController = destController;
+    void onResume() {
+      destOnResume(compileContext());
+    }
 
-    _initialized = true;
+    if (sourceStream.isBroadcast) {
+      destController = StreamController.broadcast(
+        onListen: onListen,
+        onCancel: onCancel,
+      );
+    } else {
+      destController = StreamController(
+        onListen: onListen,
+        onPause: onPause,
+        onResume: onResume,
+        onCancel: onCancel,
+      );
+    }
+    return destController.stream;
   }
+  
+  @override
+  StreamTransformer<RS, RT> cast<RS, RT>() =>
+    StreamTransformer.castFrom<SourceT, DestT, RS, RT>(this);
 
-  @mustCallSuper
-  void destOnListen() {
-    // TODO: should they be able to override the listen()?
-    //  if so, _subscription never gets set!
-    _sourceSubscription = _sourceStream.listen(
-      sourceOnData,
-      onError: sourceOnError,
-      onDone: sourceOnDone,
-      // canceling on error is usually not wanted;
-      // even if it was, it can be implemented in the onError override
+  StreamSubscription<SourceT>? destOnListen(TransformerContext<SourceT, DestT> context) {
+    return context.sourceStream.listen(
+      (event) => sourceOnData(context, event),
+      onError: (error, stackTrace) => sourceOnError(context, error, stackTrace),
+      onDone: () => sourceOnDone(context),
+      // not canceling on errors is usually what's wanted;
+      // even if it's not, it can be easily implemented in the onError override
       cancelOnError: false, 
     );
   }
 
-  FutureOr<void> destOnCancel() async {
-    await _sourceSubscription?.cancel();
-    _sourceSubscription = null;
-    if (!_sourceStream.isBroadcast) {
-      _destController.close();
+  FutureOr<StreamSubscription<SourceT>?> destOnCancel(TransformerContext<SourceT, DestT> context) async {
+    await context.sourceSubscription?.cancel();
+    if (!context.sourceStream.isBroadcast) {
+      context.destController.close();
     }
+    return null;
   }
 
-  void destOnPause() => _sourceSubscription?.pause();
+  void destOnPause(TransformerContext<SourceT, DestT> context) => context.sourceSubscription?.pause();
 
-  void destOnResume() => _sourceSubscription?.resume();
+  void destOnResume(TransformerContext<SourceT, DestT> context) => context.sourceSubscription?.resume();
 
   // can't give a default implementation because
-  // there's no way to create a ForwardT instance
-  void sourceOnData(EventT event); 
+  // there's no way to create a DestT event instance
+  void sourceOnData(TransformerContext<SourceT, DestT> context, SourceT event); 
 
-  void sourceOnError(Object error, StackTrace stackTrace) {
-    _destController.addError(error, stackTrace);
+  void sourceOnError(TransformerContext<SourceT, DestT> context, Object error, StackTrace stackTrace) {
+    context.destController.addError(error, stackTrace);
   }
 
-  void sourceOnDone() {
-    _destController.close();
+  void sourceOnDone(TransformerContext<SourceT, DestT> context) {
+    context.destController.close();
   }
 }
 
 
-final class _AsFuturesLifecycleHooks<EventT> extends StreamLifecycleHooks<EventT, Future<EventT>> {
+final class _AsFuturesTransformer<EventT> extends StreamLifecycleTransformer<EventT, Future<EventT>> {
+  
   @override
-  void destOnListen() {
+  StreamSubscription<EventT>? destOnListen(TransformerContext<EventT, Future<EventT>> context) {
     try {
-      super.destOnListen();
+      return super.destOnListen(context);
     } catch (error, stackTrace) {
-      _destController.addError(error, stackTrace);
-      _destController.close();
+      context.destController.addError(error, stackTrace);
+      context.destController.close();
+      return null;
     }
   }
 
   @override
-  void sourceOnData(EventT event) {
-    _destController.add(Future.value(event));
+  void sourceOnData(TransformerContext<EventT, Future<EventT>> context, EventT event) {
+    context.destController.add(Future.value(event));
   }
 
   @override
-  void sourceOnError(Object error, StackTrace stackTrace) {
-    _destController.add(Future.error(error, stackTrace));
+  void sourceOnError(TransformerContext<EventT, Future<EventT>> context, Object error, StackTrace stackTrace) {
+    context.destController.add(Future.error(error, stackTrace));
   }
 }
