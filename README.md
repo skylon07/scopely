@@ -8,6 +8,7 @@ A lightweight concurrency toolset to manage asynchronous tasks in dart.
     - [Example](#example)
   - [Getting started](#getting-started)
   - [Usage](#usage)
+    - [AsyncScope](#asyncscope)
   - [Additional information](#additional-information)
 
 
@@ -70,6 +71,8 @@ No further configuration needed!
 
 ## Usage
 
+### AsyncScope 
+
 Creating a scope could not be easier.
 
 ```dart
@@ -99,29 +102,20 @@ Stream newStream1 = scope.bindStream(someStream);
 Stream newStream2 = someStream.bindToScope(scope);
 ```
 
-You can decide if you want to create `AsyncScope` directly...
+Binding an `AsyncScope` to a lifecycle can be as easy as writing a mixin, like this one for flutter `State`s:
 
 ```dart
 import 'package:async_scope/async_scope.dart';
+import 'package:flutter/widgets.dart';
 
-mixin CustomScopingHook on MyTypeWithCleanup {
-  final scope = AsyncScope();
+mixin StateScoping on State {
+  final AsyncScope stateScope = AsyncScope();
 
   @override
-  void onCleanup() {
-    super.onCleanup();
-    scope.cancelAll();
+  void dispose() {
+    stateScope.cancelAll();
+    super.dispose();
   }
-}
-```
-
-...or use one of the package's predefined hooks.
-
-```dart
-import 'package:async_scope/hooks/flutter.dart';
-
-class CustomState extends State<CustomWidget> with StateScoping {
-    // StateScoping exposes `AsyncScope scope` to this widget state
 }
 ```
 
