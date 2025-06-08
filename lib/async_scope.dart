@@ -33,3 +33,5 @@
 library;
 
 export 'src/async_scope.dart';
+export 'src/stream_as_futures.dart';
+export 'src/stream_lifecycle_transformer.dart';
