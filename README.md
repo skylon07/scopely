@@ -1,8 +1,8 @@
-# async_scope
+# scopely
 
 A lightweight concurrency toolset to manage asynchronous tasks in dart.
 
-- [async\_scope](#async_scope)
+- [scopely](#scopely)
   - [Motivation](#motivation)
   - [Features](#features)
     - [Example](#example)
@@ -19,12 +19,12 @@ This package is loosely inspired by Android coroutine scopes. Dart's concurrency
 
 ## Features
 
-Using `async_scope` allows you to:
+Using `scopely` allows you to:
 - ✅ create arbitrary (optionally nested) scopes
 - ✅ bind asynchronous tasks (`Future`s or `Stream`s)
 - ✅ cancel a scope and its bound tasks
 
-What `async_scope` CAN'T do:
+What `scopely` CAN'T do:
 - ❌ make *all* `Future`s "cancelable" (only *bound* ones are)
 - ❌ automatically clean up unbound source streams
 
@@ -63,7 +63,7 @@ In other words, if a `Future` or `Stream` didn't come from a `bind...()`, it won
 Installing this package is as easy as
 
 ```
-dart pub add async_scope
+dart pub add scopely
 ```
 
 No further configuration needed!
@@ -105,7 +105,7 @@ Stream newStream2 = someStream.bindToScope(scope);
 Binding an `AsyncScope` to a lifecycle can be as easy as writing a mixin, like this one for flutter `State`s:
 
 ```dart
-import 'package:async_scope/async_scope.dart';
+import 'package:scopely/scopely.dart';
 import 'package:flutter/widgets.dart';
 
 mixin StateScoping on State {
@@ -122,4 +122,4 @@ mixin StateScoping on State {
 
 ## Additional information
 
-File bugs or feature requests on the [issues page](https://github.com/skylon07/async_scope/issues). Hope this little tool is helpful to you!
+File bugs or feature requests on the [issues page](https://github.com/skylon07/scopely/issues). Hope this little tool is helpful to you!

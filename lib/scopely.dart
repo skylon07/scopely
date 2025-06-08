@@ -8,7 +8,7 @@
 /// You can decide if you want to create `AsyncScope` directly...
 ///
 /// ```dart
-/// import 'package:async_scope/async_scope.dart';
+/// import 'package:scopely/scopely.dart';
 ///
 /// mixin CustomScopingHook on MyTypeWithCleanup {
 ///   final scope = AsyncScope();
@@ -24,13 +24,15 @@
 /// ...or use one of the package's predefined hooks.
 ///
 /// ```dart
-/// import 'package:async_scope/hooks/flutter.dart';
+/// import 'package:scopely/hooks/flutter.dart';
 ///
 /// class CustomState extends State<CustomWidget> with StateScoping {
 ///     // StateScoping exposes `AsyncScope scope` to this widget state
 /// }
 /// ```
 library;
+
+// TODO: fix the above comment -- it's outdated (particularly the scopely/hooks/flutter.dart part)
 
 export 'src/async_scope.dart';
 export 'src/stream_as_futures.dart';

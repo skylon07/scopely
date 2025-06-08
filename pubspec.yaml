@@ -1,7 +1,7 @@
-name: async_scope
+name: scopely
 description: A lightweight concurrency toolset to manage asynchronous tasks in dart.
 version: 0.1.0
-repository: https://github.com/skylon07/async_scope
+repository: https://github.com/skylon07/scopely
 
 environment:
   sdk: ^3.7.2

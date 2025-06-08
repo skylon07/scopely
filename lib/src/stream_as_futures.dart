@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:async_scope/async_scope.dart';
+import 'package:scopely/scopely.dart';
 
 // TODO: modify and use this docstring for asFutures()
   /// Creates a new stream that listens to this one, transforming all events into [Future]s
