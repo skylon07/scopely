@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:async_scope/src/stream_utils.dart';
+import 'package:async_scope/src/stream_lifecycle_transformer.dart';
 
 class AsyncScope {
   final _children = <AsyncScope>[];
