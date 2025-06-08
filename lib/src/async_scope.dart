@@ -173,8 +173,8 @@ final class _StreamTaskTransformer<EventT> extends StreamLifecycleTransformer<Ev
   }
 
   @override
-  void sourceOnDone(TransformerContext<EventT, EventT> context) {
-    super.sourceOnDone(context);
+  FutureOr<void> sourceOnDone(TransformerContext<EventT, EventT> context) async {
+    await super.sourceOnDone(context);
     signalSourceDone();
   }
 
@@ -183,7 +183,7 @@ final class _StreamTaskTransformer<EventT> extends StreamLifecycleTransformer<Ev
 
     if (!boundController.isClosed) {
       boundController.addError(AsyncTaskCancelationException._());
+      await boundController.close();
     }
-    boundController.close();
   }
 }
