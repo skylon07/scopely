@@ -48,6 +48,32 @@ class AsyncScope {
   }
 }
 
+
+class AsyncScopeCanceledError extends StateError {
+  AsyncScopeCanceledError() : super("AsyncScope has already been canceled");
+}
+
+class AsyncTaskCancelationException implements Exception {
+  // internal factory constructor ensures a singleton instance is used for all cancelation signals
+  factory AsyncTaskCancelationException._() => const AsyncTaskCancelationException._constructConst();
+
+  // class-private constructor; use factory constructor instead
+  const AsyncTaskCancelationException._constructConst();
+
+  @override
+  String toString() => "AsyncScopeCancelationException";
+}
+
+
+extension FutureScoping<ResultT> on Future<ResultT> {
+  Future<ResultT> bindToScope(AsyncScope scope) => scope.bindFuture(this);
+}
+
+extension StreamScoping<EventT> on Stream<EventT> {
+  Stream<EventT> bindToScope(AsyncScope scope) => scope.bindStream(this);
+}
+
+
 abstract class _CancelableTask<DelegateT> {
   final DelegateT delegate;
 
@@ -160,21 +186,4 @@ final class _StreamTaskTransformer<EventT> extends StreamLifecycleTransformer<Ev
     }
     boundController.close();
   }
-}
-
-
-class AsyncScopeCanceledError extends StateError {
-  AsyncScopeCanceledError() : super("AsyncScope has already been canceled");
-}
-
-
-class AsyncTaskCancelationException implements Exception {
-  // internal factory constructor ensures a singleton instance is used for all cancelation signals
-  factory AsyncTaskCancelationException._() => const AsyncTaskCancelationException._constructConst();
-
-  // class-private constructor; use factory constructor instead
-  const AsyncTaskCancelationException._constructConst();
-
-  @override
-  String toString() => "AsyncScopeCancelationException";
 }
