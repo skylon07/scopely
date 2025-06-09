@@ -6,6 +6,13 @@ typedef TransformerContext<SourceT, DestT> = ({
   StreamController<DestT> destController
 });
 
+typedef StreamControllerHandlers = ({
+  void Function() listen,
+  FutureOr<void> Function() cancel,
+  void Function() pause,
+  void Function() resume,
+});
+
 abstract base class StreamLifecycleTransformer<SourceT, DestT> implements StreamTransformer<SourceT, DestT> {
   @override
   Stream<DestT> bind(Stream<SourceT> sourceStream) {
@@ -18,37 +25,29 @@ abstract base class StreamLifecycleTransformer<SourceT, DestT> implements Stream
       sourceSubscription: sourceSubscription,
     );
 
-    void onListen() {
+    void listen() {
       sourceSubscription = destOnListen(compileContext());
     }
 
-    FutureOr<void> onCancel() async {
+    FutureOr<void> cancel() async {
       sourceSubscription = await destOnCancel(compileContext());
     }
 
-    void onPause() {
+    void pause() {
       destOnPause(compileContext());
     }
 
-    void onResume() {
+    void resume() {
       destOnResume(compileContext());
     }
 
-    if (sourceStream.isBroadcast) {
-      destController = StreamController.broadcast(
-        onListen: onListen,
-        onCancel: onCancel,
-      );
-    } else {
-      destController = StreamController(
-        onListen: onListen,
-        onPause: onPause,
-        onResume: onResume,
-        onCancel: onCancel,
-      );
-    }
-
-    onBind(compileContext());
+    destController = onBindDestController(
+      sourceStream, (
+      listen: listen,
+      cancel: cancel,
+      pause: pause,
+      resume: resume,
+    ));
 
     return destController.stream;
   }
@@ -57,7 +56,21 @@ abstract base class StreamLifecycleTransformer<SourceT, DestT> implements Stream
   StreamTransformer<RS, RT> cast<RS, RT>() =>
     StreamTransformer.castFrom<SourceT, DestT, RS, RT>(this);
 
-  void onBind(TransformerContext<SourceT, DestT> context) {}
+  StreamController<DestT> onBindDestController(Stream<SourceT> sourceStream, StreamControllerHandlers handlers) {
+    if (sourceStream.isBroadcast) {
+      return StreamController.broadcast(
+        onListen: handlers.listen,
+        onCancel: handlers.cancel,
+      );
+    } else {
+      return StreamController(
+        onListen: handlers.listen,
+        onPause: handlers.pause,
+        onResume: handlers.resume,
+        onCancel: handlers.cancel,
+      );
+    }
+  }
 
   StreamSubscription<SourceT>? destOnListen(TransformerContext<SourceT, DestT> context) {
     return context.sourceStream.listen(

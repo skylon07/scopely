@@ -146,8 +146,10 @@ final class _StreamTaskTransformer<EventT> extends StreamLifecycleTransformer<Ev
   late StreamController<EventT> boundController;
 
   @override
-  void onBind(TransformerContext<EventT, EventT> context) {
-    boundController = context.destController;
+  StreamController<EventT> onBindDestController(Stream<EventT> sourceStream, StreamControllerHandlers handlers) {
+    var controller = super.onBindDestController(sourceStream, handlers);
+    boundController = controller;
+    return controller;
   }
 
   @override

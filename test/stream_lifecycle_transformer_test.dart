@@ -142,7 +142,7 @@ void main() {
       Stream<dynamic>.fromIterable([1, 2, 3]).transform(transformer);
       Stream<dynamic>.empty(broadcast: true).transform(transformer);
 
-      expect(transformer.onBindCalls, 3); // include transform on setup!
+      expect(transformer.onBindDestControllerCalls, 3); // include transform on setup!
     });
 
     test("calls sourceOnData() once per event", () async {
@@ -349,11 +349,11 @@ final class IntToStringTransformer extends StreamLifecycleTransformer<int, Strin
 }
 
 final class SpyTransformer extends StreamLifecycleTransformer {
-  int onBindCalls = 0;
+  int onBindDestControllerCalls = 0;
   @override
-  void onBind(TransformerContext context) {
-    onBindCalls++;
-    super.onBind(context);
+  StreamController onBindDestController(Stream sourceStream, StreamControllerHandlers handlers) {
+    onBindDestControllerCalls++;
+    return super.onBindDestController(sourceStream, handlers);
   }
   
   int destOnListenCalls = 0;
