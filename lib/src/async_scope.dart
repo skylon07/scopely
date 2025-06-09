@@ -66,11 +66,11 @@ class AsyncTaskCancelationException implements Exception {
 
 
 extension FutureScoping<ResultT> on Future<ResultT> {
-  Future<ResultT> bindToScope(AsyncScope scope) => scope.bindFuture(this);
+  Future<ResultT> inScope(AsyncScope scope) => scope.bindFuture(this);
 }
 
 extension StreamScoping<EventT> on Stream<EventT> {
-  Stream<EventT> bindToScope(AsyncScope scope) => scope.bindStream(this);
+  Stream<EventT> inScope(AsyncScope scope) => scope.bindStream(this);
 }
 
 
