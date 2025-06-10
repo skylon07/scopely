@@ -26,9 +26,13 @@ void main() {
       expect(result, ["1", "2", "3"]);
     });
 
-    test("forwards errors (unmodified)", () async {
-      var errors = <Object>[];
-      transformed.listen(null, onError: (error) => errors.add(error));
+    test("forwards errors (unmodified) with their stack traces", () async {
+      var errors = [];
+      var stackTraces = [];
+      transformed.listen(null, onError: (error, stackTrace) {
+        errors.add(error);
+        stackTraces.add(stackTrace);
+      });
 
       var error1 = StateError("first error");
       controller.addError(error1);
@@ -37,6 +41,9 @@ void main() {
       await Future.delayed(Duration.zero);
 
       expect(errors, [error1, error2]);
+      for (var stackTrace in stackTraces) {
+        expect(stackTrace, isA<StackTrace>());
+      }
     });
 
     test("signals 'done' after closing", () async {
