@@ -87,7 +87,7 @@ abstract base class StreamLifecycleTransformer<SourceT, DestT> implements Stream
     await context.sourceSubscription?.cancel();
     // broadcast streams shouldn't be closed because more listeners could come later
     if (!context.sourceStream.isBroadcast) {
-      await _safeClose(context.destController);
+      await context.destController.closeIfNeeded();
     }
     return null;
   }
@@ -105,13 +105,15 @@ abstract base class StreamLifecycleTransformer<SourceT, DestT> implements Stream
   }
 
   FutureOr<void> sourceOnDone(TransformerContext<SourceT, DestT> context) async {
-    await _safeClose(context.destController);
+    await context.destController.closeIfNeeded();
   }
+}
 
-  Future<void> _safeClose(StreamController destController) async {
+extension SafeClosing on StreamController {
+  Future<void> closeIfNeeded() async {
     // awaiting a close() after it's already closed will hang forever
-    if (!destController.isClosed) {
-      await destController.close();
+    if (!isClosed) {
+      await close();
     }
   }
 }
