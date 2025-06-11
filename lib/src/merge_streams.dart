@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:scopely/scopely.dart';
 
 Stream<List<dynamic>> mergeStreams(List<Stream<dynamic>> streams) {
+  if (streams.isEmpty) throw ArgumentError("Must provide at least one stream");
+  
   var manager = _MergeStreamsManager();
   for (var (idx, stream) in streams.indexed) {
     // the resulting stream (which is always just the shared controller's stream)

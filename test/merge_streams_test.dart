@@ -135,6 +135,30 @@ void main() {
 
       expect(isDone, true);
     });
+
+    test("no streams to merge throws an error", () async {
+      expect(() {
+        mergeStreams([]);
+      }, throwsArgumentError);
+
+      // just because setup requires it...
+      mergedStreamSubscription = mergedStream.listen(null);
+    });
+
+    test("merging one stream acts as a passthrough", () async {
+      mergedStream = mergeStreams([controller1.stream]);
+
+      var dataCompleter = Completer<List<dynamic>>();
+      mergedStreamSubscription = mergedStream.listen((data) {
+        dataCompleter.complete(data);
+      });
+
+      controller1.add(15);
+
+      var data = await dataCompleter.future;
+
+      expect(data, [15]);
+    });
   });
 
   group("N-airty mergeStreamsN()", () {
