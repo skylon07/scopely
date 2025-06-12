@@ -19,9 +19,12 @@ void main() {
     });
 
     test("forwards transformed data", () async {
-      var source = Stream.fromIterable([1, 2, 3]);
+      controller.add(1);
+      controller.add(2);
+      controller.add(3);
+      controller.close();
 
-      var result = await source.transform(transformer).toList();
+      var result = await transformed.toList();
 
       expect(result, ["1", "2", "3"]);
     });
