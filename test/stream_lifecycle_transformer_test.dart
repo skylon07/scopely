@@ -105,6 +105,46 @@ void main() {
           transformed.listen(null);
         }, throwsStateError);
       });
+
+      test("still throws on multiple listens, even if they are different transformations", () async {
+        expect(() {
+          transformed.listen(null);
+        }, returnsNormally);
+
+        expect(() {
+          transformed.listen(null);
+        }, throwsStateError);
+
+        expect(() {
+          controller.stream.transform(transformer).listen(null);
+        }, throwsStateError);
+      });
+
+      test("treats generic (not 'stream already listened to') errors in onListen() as uncaught errors)", () async {
+        transformer.onListenCallback = () => throw "some error";
+
+        var listensCompleted = false;
+        var handledCaughtError = false;
+        var handledUncaughtError = false;
+        runZonedGuarded(
+          () {
+            try {
+              transformed.listen(null);
+              listensCompleted = true;
+            } catch (error) {
+              handledCaughtError = true;
+            }
+          },
+          (error, stackTrace) {
+            handledUncaughtError = true;
+          },
+        );
+        await Future.delayed(Duration(seconds: 1));
+
+        expect(listensCompleted, true);
+        expect(handledCaughtError, false);
+        expect(handledUncaughtError, true);
+      });
     });
 
     group("for broadcast streams", () {
@@ -129,6 +169,32 @@ void main() {
         expect(() {
           transformed.listen(null);
         }, returnsNormally);
+      });
+
+      test("treats generic (not 'stream already listened to') errors in onListen() as uncaught errors)", () async {
+        transformer.onListenCallback = () => throw "some error";
+
+        var listensCompleted = false;
+        var handledCaughtError = false;
+        var handledUncaughtError = false;
+        runZonedGuarded(
+          () {
+            try {
+              transformed.listen(null);
+              listensCompleted = true;
+            } catch (error) {
+              handledCaughtError = true;
+            }
+          },
+          (error, stackTrace) {
+            handledUncaughtError = true;
+          },
+        );
+        await Future.delayed(Duration(seconds: 1));
+
+        expect(listensCompleted, true);
+        expect(handledCaughtError, false);
+        expect(handledUncaughtError, true);
       });
     });
   });
@@ -352,6 +418,14 @@ void main() {
 }
 
 final class IntToStringTransformer extends StreamLifecycleTransformer<int, String> {
+  void Function()? onListenCallback;
+
+  @override
+  StreamSubscription<int>? destOnListen(TransformerContext<int, String> context) {
+    onListenCallback?.call();
+    return super.destOnListen(context);
+  }
+
   @override
   void sourceOnData(TransformerContext<int, String> context, int event) {
     context.destController.add(event.toString());

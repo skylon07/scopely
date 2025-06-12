@@ -25,8 +25,19 @@ abstract base class StreamLifecycleTransformer<SourceT, DestT> implements Stream
       sourceSubscription: sourceSubscription,
     );
 
+    Object? listenError;
+    StackTrace? listenErrorTrace;
     void listen() {
-      sourceSubscription = destOnListen(compileContext());
+      try {
+        sourceSubscription = destOnListen(compileContext());
+      } catch (error, stackTrace) {
+        if (_shouldHandleListenErrorSynchronously(error)) {
+          listenError = error;
+          listenErrorTrace = stackTrace;
+        } else {
+          rethrow;
+        }
+      }
     }
 
     FutureOr<void> cancel() async {
@@ -49,7 +60,7 @@ abstract base class StreamLifecycleTransformer<SourceT, DestT> implements Stream
       resume: resume,
     ));
 
-    return destController.stream;
+    return _ListenProxyStream(destController.stream, () => (listenError, listenErrorTrace));
   }
   
   @override
@@ -116,4 +127,40 @@ extension SafeClosing on StreamController {
       await close();
     }
   }
+}
+
+class _ListenProxyStream<EventT> extends Stream<EventT> {
+  final Stream<EventT> sourceStream;
+  final (Object?, StackTrace?) Function() sourceListenErrorProvider;
+  _ListenProxyStream(this.sourceStream, this.sourceListenErrorProvider);
+
+  @override
+  StreamSubscription<EventT> listen(
+    void Function(EventT event)? onData, {
+    Function? onError, 
+    void Function()? onDone, 
+    bool? cancelOnError,
+  }) {
+    var subscription = sourceStream.listen(onData, onError: onError, onDone: onDone, cancelOnError: cancelOnError);
+    
+    var (error, stackTrace) = sourceListenErrorProvider();
+    var sourceListenDidError = error != null;
+    if (sourceListenDidError) {
+      if (stackTrace != null) {
+        Error.throwWithStackTrace(error, stackTrace);
+      } else {
+        throw error;
+      }
+    }
+
+    return subscription;
+  }
+}
+
+bool _shouldHandleListenErrorSynchronously(Object error) {
+  var isDuplicateListenerError = 
+    error is StateError &&
+    error.message == "Stream has already been listened to.";
+  
+  return isDuplicateListenerError;
 }
