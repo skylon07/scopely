@@ -26,7 +26,8 @@ void main() {
       controller1.close();
       controller2.close();
       controller3.close();
-      mergedStreamSubscription!.cancel(); // tests should assign this if they haven't
+      assert (mergedStreamSubscription != null, "Tests should store the resulting subscription for cleanup");
+      mergedStreamSubscription!.cancel();
     });
 
     test("forwards a combined list of values from all streams", () async {
