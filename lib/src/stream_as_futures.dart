@@ -32,23 +32,14 @@ extension StreamAsFutures<EventT> on Stream<EventT> {
 
 final class _AsFuturesTransformer<EventT> extends StreamLifecycleTransformer<EventT, Future<EventT>> {
   @override
-  StreamSubscription<EventT>? destOnListen(TransformerContext<EventT, Future<EventT>> context) {
-    try {
-      return super.destOnListen(context);
-    } catch (error, stackTrace) {
-      context.destController.addError(error, stackTrace);
-      context.destController.close();
-      return null;
-    }
-  }
-
-  @override
   void sourceOnData(TransformerContext<EventT, Future<EventT>> context, EventT event) {
     context.destController.add(Future.value(event));
   }
 
   @override
-  void sourceOnError(TransformerContext<EventT, Future<EventT>> context, Object error, StackTrace stackTrace) {
-    context.destController.add(Future.error(error, stackTrace));
+  void sourceOnError(TransformerContext<EventT, Future<EventT>> context, Object error, StackTrace stackTrace) async {
+    var completer = Completer<EventT>();
+    context.destController.add(completer.future);
+    completer.completeError(error, stackTrace);
   }
 }
