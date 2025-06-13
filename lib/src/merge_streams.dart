@@ -6,12 +6,16 @@ Stream<List<dynamic>> mergeStreams(List<Stream<dynamic>> streams) {
   if (streams.isEmpty) throw ArgumentError("Must provide at least one stream");
   
   var manager = _MergeStreamsManager();
+  late Stream<List<dynamic>> resultStream;
   for (var (idx, stream) in streams.indexed) {
-    // the resulting stream (which is always just the shared controller's stream)
-    // can be ignored; this transformation is just for the side effects
-    stream.cast<dynamic>().transform(_MergeStreamsTransformer<dynamic>(manager, streamIdx: idx, originalStream: stream));
+    // each resulting stream is equivalent in the way it functions,
+    // so using any of them is valid
+    resultStream = stream
+      .cast<dynamic>()
+      .transform(_MergeStreamsTransformer<dynamic>(manager, streamIdx: idx, originalStream: stream))
+      .cast<List<dynamic>>();
   }
-  return manager.sharedDestController.stream;
+  return resultStream;
 }
 
 Stream<(E1, E2)> mergeStreams2<E1, E2>(
