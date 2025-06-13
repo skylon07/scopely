@@ -160,6 +160,16 @@ void main() {
 
       expect(data, [15]);
     });
+
+    test("throws when merging a single-subscription stream that's already been listened to", () {
+      var stream1 = StreamController().stream;
+      var stream2 = StreamController().stream;
+      mergedStreamSubscription = stream2.listen(null);
+      
+      expect(() {
+        mergeStreams([stream1, stream2]).listen(null);
+      }, throwsStateError);
+    });
   });
 
   group("N-airty mergeStreamsN()", () {
