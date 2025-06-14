@@ -2,6 +2,18 @@ import 'dart:async';
 
 import 'package:scopely/scopely.dart';
 
+/// Merges a list of streams together and returns their results as a combined list of
+/// their emissions.
+/// 
+/// While this function accepts an arbitrary number of streams, it provides no type guarantees
+/// for the data it returns, other than the size of the resulting lists being equal to
+/// the number of given source streams. After this method is called, the list of streams
+/// cannot be changed. For type-safe variants, see [mergeStreams2] through [mergeStreams10].
+/// 
+/// Internally, this is really a special implementation of [StreamLifecycleTransformer]
+/// that shares a single controller between multiple transformers. Interacting with a
+/// [StreamLifecycleTransformer] this way is fairly nuanced with many subtleties,
+/// which is why this function implements it generally so you don't ever have to!
 Stream<List<dynamic>> mergeStreams(List<Stream<dynamic>> streams) {
   if (streams.isEmpty) throw ArgumentError("Must provide at least one stream");
   
@@ -18,6 +30,8 @@ Stream<List<dynamic>> mergeStreams(List<Stream<dynamic>> streams) {
   return resultStream;
 }
 
+/// A type-safe variant of [mergeStreams], taking two streams and returning their
+/// results as a record.
 Stream<(E1, E2)> mergeStreams2<E1, E2>(
   Stream<E1> stream1, 
   Stream<E2> stream2,
@@ -28,6 +42,8 @@ Stream<(E1, E2)> mergeStreams2<E1, E2>(
   });
 }
 
+/// A type-safe variant of [mergeStreams], taking three streams and returning their
+/// results as a record.
 Stream<(E1, E2, E3)> mergeStreams3<E1, E2, E3>(
   Stream<E1> stream1, 
   Stream<E2> stream2,
@@ -39,6 +55,8 @@ Stream<(E1, E2, E3)> mergeStreams3<E1, E2, E3>(
   });
 }
 
+/// A type-safe variant of [mergeStreams], taking four streams and returning their
+/// results as a record.
 Stream<(E1, E2, E3, E4)> mergeStreams4<E1, E2, E3, E4>(
   Stream<E1> stream1, 
   Stream<E2> stream2,
@@ -51,6 +69,8 @@ Stream<(E1, E2, E3, E4)> mergeStreams4<E1, E2, E3, E4>(
   });
 }
 
+/// A type-safe variant of [mergeStreams], taking five streams and returning their
+/// results as a record.
 Stream<(E1, E2, E3, E4, E5)> mergeStreams5<E1, E2, E3, E4, E5>(
   Stream<E1> stream1, 
   Stream<E2> stream2,
@@ -64,6 +84,8 @@ Stream<(E1, E2, E3, E4, E5)> mergeStreams5<E1, E2, E3, E4, E5>(
   });
 }
 
+/// A type-safe variant of [mergeStreams], taking six streams and returning their
+/// results as a record.
 Stream<(E1, E2, E3, E4, E5, E6)> mergeStreams6<E1, E2, E3, E4, E5, E6>(
   Stream<E1> stream1,
   Stream<E2> stream2,
@@ -78,6 +100,8 @@ Stream<(E1, E2, E3, E4, E5, E6)> mergeStreams6<E1, E2, E3, E4, E5, E6>(
   });
 }
 
+/// A type-safe variant of [mergeStreams], taking seven streams and returning their
+/// results as a record.
 Stream<(E1, E2, E3, E4, E5, E6, E7)> mergeStreams7<E1, E2, E3, E4, E5, E6, E7>(
   Stream<E1> stream1,
   Stream<E2> stream2,
@@ -93,6 +117,8 @@ Stream<(E1, E2, E3, E4, E5, E6, E7)> mergeStreams7<E1, E2, E3, E4, E5, E6, E7>(
   });
 }
 
+/// A type-safe variant of [mergeStreams], taking eight streams and returning their
+/// results as a record.
 Stream<(E1, E2, E3, E4, E5, E6, E7, E8)> mergeStreams8<E1, E2, E3, E4, E5, E6, E7, E8>(
   Stream<E1> stream1,
   Stream<E2> stream2,
@@ -109,6 +135,8 @@ Stream<(E1, E2, E3, E4, E5, E6, E7, E8)> mergeStreams8<E1, E2, E3, E4, E5, E6, E
   });
 }
 
+/// A type-safe variant of [mergeStreams], taking nine streams and returning their
+/// results as a record.
 Stream<(E1, E2, E3, E4, E5, E6, E7, E8, E9)> mergeStreams9<E1, E2, E3, E4, E5, E6, E7, E8, E9>(
   Stream<E1> stream1,
   Stream<E2> stream2,
@@ -126,6 +154,8 @@ Stream<(E1, E2, E3, E4, E5, E6, E7, E8, E9)> mergeStreams9<E1, E2, E3, E4, E5, E
   });
 }
 
+/// A type-safe variant of [mergeStreams], taking ten streams and returning their
+/// results as a record.
 Stream<(E1, E2, E3, E4, E5, E6, E7, E8, E9, E10)> mergeStreams10<E1, E2, E3, E4, E5, E6, E7, E8, E9, E10>(
   Stream<E1> stream1,
   Stream<E2> stream2,
@@ -148,6 +178,13 @@ Stream<(E1, E2, E3, E4, E5, E6, E7, E8, E9, E10)> mergeStreams10<E1, E2, E3, E4,
 }
 
 
+/// A class representing the context around a single merge-streams operation.
+/// This is responsible for orchestrating the interactions between the merged
+/// source streams and the combined resulting/destination stream's controller.
+/// 
+/// Due to the nature of combining multiple streams of potentially different types,
+/// type safety for source streams, their subscriptions, etc has been disabled.
+/// This has been explicitly declared in the affected type contracts (ie `Stream<dynamic>`).
 class _MergeStreamsManager {
   late final sharedDestController = StreamController<List<dynamic>>(
     onListen: onListen,
@@ -223,6 +260,8 @@ class _MergeStreamsManager {
   }
 }
 
+/// A class representing a connection between a source stream to merge and
+/// a [_MergeStreamsManager]'s controller.
 final class _MergeStreamsTransformer<SourceT> extends StreamLifecycleTransformer<SourceT, dynamic> {
   final _MergeStreamsManager manager;
   final int streamIdx;
