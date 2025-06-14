@@ -10,7 +10,9 @@ class AsyncScope {
   }
 
   final _tasksToCancel = <_CancelableTask>{};
+  
   var _isCanceled = false;
+  bool get isCanceled => _isCanceled;
 
   Future<ResultT> bindFuture<ResultT>(Future<ResultT> future) => 
     _bindTask(_FutureTask(future));
@@ -53,15 +55,15 @@ class AsyncScopeCanceledError extends StateError {
   AsyncScopeCanceledError() : super("AsyncScope has already been canceled");
 }
 
-class AsyncTaskCancelationException implements Exception {
+class TaskCancelationException implements Exception {
   // internal factory constructor ensures a singleton instance is used for all cancelation signals
-  factory AsyncTaskCancelationException._() => const AsyncTaskCancelationException._constructConst();
+  factory TaskCancelationException._() => const TaskCancelationException._constructConst();
 
   // class-private constructor; use factory constructor instead
-  const AsyncTaskCancelationException._constructConst();
+  const TaskCancelationException._constructConst();
 
   @override
-  String toString() => "AsyncScopeCancelationException";
+  String toString() => "$TaskCancelationException";
 }
 
 
@@ -107,7 +109,7 @@ final class _FutureTask<ResultT> extends _CancelableTask<Future<ResultT>> {
 
   @override
   void cancel() {
-    _attemptComplete(() => _boundCompleter.completeError(AsyncTaskCancelationException._()));
+    _attemptComplete(() => _boundCompleter.completeError(TaskCancelationException._()));
   }
 
   void _attemptComplete(void Function() completionBlock) {
@@ -184,7 +186,7 @@ final class _StreamTaskTransformer<EventT> extends StreamLifecycleTransformer<Ev
     await delegateSubscription?.cancel();
 
     if (!boundController.isClosed) {
-      boundController.addError(AsyncTaskCancelationException._());
+      boundController.addError(TaskCancelationException._());
       await boundController.close();
     }
   }
