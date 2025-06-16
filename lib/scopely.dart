@@ -35,5 +35,6 @@ library;
 // TODO: fix the above comment -- it's outdated (particularly the scopely/hooks/flutter.dart part)
 
 export 'src/async_scope.dart';
+export 'src/merge_streams.dart';
 export 'src/stream_as_futures.dart';
 export 'src/stream_lifecycle_transformer.dart';

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:scopely/scopely.dart';
-import 'package:scopely/src/merge_streams.dart';
 import 'package:test/test.dart';
 
 void main() {
