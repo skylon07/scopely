@@ -160,8 +160,8 @@ abstract base class StreamLifecycleTransformer<SourceT, DestT> implements Stream
   /// Like all `destOn...()` hooks, you should be careful if you decide to replace this hook's behavior.
   /// 
   /// This hook should asynchronously `await` any necessary `cancel()` or `close()` operations,
-  /// then return either `null` to signal a successful cancelation, or `context.sourceSubscription`
-  /// if a cancelation did not occur and the subscription is still active. By default,
+  /// then return either `null` to signal a successful cancellation, or `context.sourceSubscription`
+  /// if a cancellation did not occur and the subscription is still active. By default,
   /// the subscription is always canceled, and the destination stream's controller is only closed
   /// if the source stream is a single-subscription stream.
   /// 

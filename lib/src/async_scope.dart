@@ -37,7 +37,7 @@ class AsyncScope {
     return catchAllCancellations(body, shouldBeCaught: (cancelError) => cancelError._owner == this);
   }
 
-  static Future<void> catchAllCancellations(FutureOr<void>? Function() body, {bool Function(TaskCancelationException cancelError)? shouldBeCaught}) async {
+  static Future<void> catchAllCancellations(FutureOr<void>? Function() body, {bool Function(TaskCancellationException cancelError)? shouldBeCaught}) async {
     shouldBeCaught ??= (_) => true;
 
     // you will get stuck awaiting a future that errors in a different zone,
@@ -50,7 +50,7 @@ class AsyncScope {
           if (!completer.isCompleted) {
             completer.complete();
           }
-        } on TaskCancelationException catch(error, stackTrace) {
+        } on TaskCancellationException catch(error, stackTrace) {
           var forwardAsError = !shouldBeCaught!(error);
           if (forwardAsError) {
             completer.completeError(error, stackTrace);
@@ -63,7 +63,7 @@ class AsyncScope {
       },
       (error, stackTrace) {
         var shouldForwardError =
-          error is! TaskCancelationException ||
+          error is! TaskCancellationException ||
           !shouldBeCaught!(error);
         if (shouldForwardError) {
           Error.throwWithStackTrace(error, stackTrace);
@@ -95,12 +95,12 @@ class AsyncScopeCanceledError extends StateError {
   AsyncScopeCanceledError() : super("AsyncScope has already been canceled");
 }
 
-class TaskCancelationException implements Exception {
+class TaskCancellationException implements Exception {
   final AsyncScope _owner;
-  TaskCancelationException._(this._owner);
+  TaskCancellationException._(this._owner);
 
   @override
-  String toString() => "$TaskCancelationException";
+  String toString() => "$TaskCancellationException";
 }
 
 
@@ -146,7 +146,7 @@ final class _FutureTask<ResultT> extends _CancelableTask<Future<ResultT>> {
 
   @override
   void cancel() {
-    _attemptComplete(() => _boundCompleter.completeError(TaskCancelationException._(owner)));
+    _attemptComplete(() => _boundCompleter.completeError(TaskCancellationException._(owner)));
   }
 
   void _attemptComplete(void Function() completionBlock) {
@@ -224,7 +224,7 @@ final class _StreamTaskTransformer<EventT> extends StreamLifecycleTransformer<Ev
     await delegateSubscription?.cancel();
 
     if (!boundController.isClosed) {
-      boundController.addError(TaskCancelationException._(owner));
+      boundController.addError(TaskCancellationException._(owner));
       await boundController.close();
     }
   }

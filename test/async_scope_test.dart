@@ -36,7 +36,7 @@ void main() {
             scope2.cancelAll();
             await future;
           });
-        }, throwsA(isA<TaskCancelationException>()));
+        }, throwsA(isA<TaskCancellationException>()));
       });
 
       test("catches cancellation exceptions from all scopes (when using the static method)", () async {
@@ -357,9 +357,9 @@ void main() {
 
       completer.complete();
 
-      expect(future1, throwsA(isA<TaskCancelationException>()));
+      expect(future1, throwsA(isA<TaskCancellationException>()));
       expect(future2, completes);
-      expect(future3, throwsA(isA<TaskCancelationException>()));
+      expect(future3, throwsA(isA<TaskCancellationException>()));
     });
   });
 

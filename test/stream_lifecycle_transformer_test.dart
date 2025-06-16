@@ -350,7 +350,7 @@ void main() {
         expect(transformer.destOnListenCalls, 2);
       });
 
-      test("calls destOnCancel() once ONLY on last cancelation", () async {
+      test("calls destOnCancel() once ONLY on last cancellation", () async {
         var subscription1 = transformed.listen(null);
         
         expect(transformer.destOnCancelCalls, 0);
