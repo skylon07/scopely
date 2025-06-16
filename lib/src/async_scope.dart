@@ -15,10 +15,10 @@ class AsyncScope {
   bool get isCanceled => _isCanceled;
 
   Future<ResultT> bindFuture<ResultT>(Future<ResultT> future) => 
-    _bindTask(_FutureTask(future));
+    _bindTask(_FutureTask(this, future));
 
   Stream<EventT> bindStream<EventT>(Stream<EventT> stream) =>
-    _bindTask(_StreamTask(stream));
+    _bindTask(_StreamTask(this, stream));
 
   void cancelAll() async {
     for (var task in _tasksToCancel) {
@@ -31,6 +31,46 @@ class AsyncScope {
     }
 
     _isCanceled = true;
+  }
+
+  Future<void> catchCancellations(FutureOr<void> Function() body) async {
+    return catchAllCancellations(body, shouldBeCaught: (cancelError) => cancelError._owner == this);
+  }
+
+  static Future<void> catchAllCancellations(FutureOr<void>? Function() body, {bool Function(TaskCancelationException cancelError)? shouldBeCaught}) async {
+    shouldBeCaught ??= (_) => true;
+
+    // you will get stuck awaiting a future that errors in a different zone,
+    // so a completer allows us to bridge the error back to the caller
+    var completer = Completer();
+    runZonedGuarded(
+      () async {
+        try {
+          await body();
+          if (!completer.isCompleted) {
+            completer.complete();
+          }
+        } on TaskCancelationException catch(error, stackTrace) {
+          var forwardAsError = !shouldBeCaught!(error);
+          if (forwardAsError) {
+            completer.completeError(error, stackTrace);
+          } else {
+            completer.complete();
+          }
+        } catch (error, stackTrace) {
+          completer.completeError(error, stackTrace);
+        }
+      },
+      (error, stackTrace) {
+        var shouldForwardError =
+          error is! TaskCancelationException ||
+          !shouldBeCaught!(error);
+        if (shouldForwardError) {
+          Error.throwWithStackTrace(error, stackTrace);
+        }
+      },
+    );
+    return completer.future;
   }
 
   DelegateT _bindTask<DelegateT>(_CancelableTask<DelegateT> task) {
@@ -56,11 +96,8 @@ class AsyncScopeCanceledError extends StateError {
 }
 
 class TaskCancelationException implements Exception {
-  // internal factory constructor ensures a singleton instance is used for all cancelation signals
-  factory TaskCancelationException._() => const TaskCancelationException._constructConst();
-
-  // class-private constructor; use factory constructor instead
-  const TaskCancelationException._constructConst();
+  final AsyncScope _owner;
+  TaskCancelationException._(this._owner);
 
   @override
   String toString() => "$TaskCancelationException";
@@ -75,11 +112,11 @@ extension StreamScoping<EventT> on Stream<EventT> {
   Stream<EventT> inScope(AsyncScope scope) => scope.bindStream(this);
 }
 
-
 abstract class _CancelableTask<DelegateT> {
+  final AsyncScope owner;
   final DelegateT delegate;
 
-  _CancelableTask(this.delegate);
+  _CancelableTask(this.owner, this.delegate);
 
   abstract final DelegateT boundDelegate;
   
@@ -90,7 +127,7 @@ abstract class _CancelableTask<DelegateT> {
 final class _FutureTask<ResultT> extends _CancelableTask<Future<ResultT>> {
   final _boundCompleter = Completer<ResultT>();
 
-  _FutureTask(super.delegate);
+  _FutureTask(super.owner, super.delegate);
 
   @override
   late Future<ResultT> boundDelegate = _boundCompleter.future;
@@ -109,7 +146,7 @@ final class _FutureTask<ResultT> extends _CancelableTask<Future<ResultT>> {
 
   @override
   void cancel() {
-    _attemptComplete(() => _boundCompleter.completeError(TaskCancelationException._()));
+    _attemptComplete(() => _boundCompleter.completeError(TaskCancelationException._(owner)));
   }
 
   void _attemptComplete(void Function() completionBlock) {
@@ -120,7 +157,7 @@ final class _FutureTask<ResultT> extends _CancelableTask<Future<ResultT>> {
 }
 
 final class _StreamTask<EventT> extends _CancelableTask<Stream<EventT>> {
-  _StreamTask(super.delegate);
+  _StreamTask(super.owner, super.delegate);
 
   @override
   late final Stream<EventT> boundDelegate;
@@ -129,7 +166,7 @@ final class _StreamTask<EventT> extends _CancelableTask<Stream<EventT>> {
 
   @override
   void bind(void Function() signalDelegateDone) async {
-    bindingTransformer = _StreamTaskTransformer(signalDelegateDone);
+    bindingTransformer = _StreamTaskTransformer(owner, signalDelegateDone);
     boundDelegate = delegate.transform(bindingTransformer);
   }
 
@@ -140,9 +177,10 @@ final class _StreamTask<EventT> extends _CancelableTask<Stream<EventT>> {
 }
 
 final class _StreamTaskTransformer<EventT> extends StreamLifecycleTransformer<EventT, EventT> {
+  final AsyncScope owner;
   final void Function() signalSourceDone;
 
-  _StreamTaskTransformer(this.signalSourceDone);
+  _StreamTaskTransformer(this.owner, this.signalSourceDone);
 
   StreamSubscription? delegateSubscription;
   late StreamController<EventT> boundController;
@@ -186,7 +224,7 @@ final class _StreamTaskTransformer<EventT> extends StreamLifecycleTransformer<Ev
     await delegateSubscription?.cancel();
 
     if (!boundController.isClosed) {
-      boundController.addError(TaskCancelationException._());
+      boundController.addError(TaskCancelationException._(owner));
       await boundController.close();
     }
   }
