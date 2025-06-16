@@ -98,7 +98,7 @@ void main() {
         var controller = StreamController();
 
         var catchFuture = scope.catchCancellations(() async {
-          await for (var data in scope.bindStream(controller.stream)) {
+          await for (var _ in scope.bindStream(controller.stream)) {
             // just ignore data
           }
         });
