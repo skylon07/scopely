@@ -104,23 +104,32 @@ abstract base class StreamLifecycleTransformer<SourceT, DestT> implements Stream
   /// An overridable hook called when the [StreamController] responsible for the 
   /// overall transformation is created.
   /// 
-  /// Generally speaking, this method's default behavior (creating a new controller)
-  /// should not be replaced. A notable exception is to reuse the same controller across
-  /// multiple streams/transformers. However, returning a custom controller from this method
-  /// comes with subtle implications that, if not well understood, can be very hard to debug.
-  /// For this reason, [mergeStreams] is provided to safely handle transforming multiple streams
-  /// from a shared controller, which ultimately overrides this method so you don't have to.
+  /// Override this hook if you want to use synchronous controllers or use your own
+  /// custom controllers. By default, this returns asynchronous controllers.
+  /// 
+  /// You can call `super.onBindDestController(...)` with `useSyncControllers: true`
+  /// to request a synchronous controller (see [SynchronousStreamController] for the
+  /// implications this has). The `useSyncControllers` parameter passed *to your override*
+  /// will always be `null`, so you can safely ignore it in your implementation.
+  /// 
+  /// This method's default behavior (creating a new controller per stream) should almost certainly
+  /// not be replaced. Returning a custom controller from this method can introduce
+  /// subtle and potentially hard-to-debug issues. The most common reason for wanting to
+  /// return custom controllers is to reuse them between multiple streams. For this reason,
+  /// [mergeStreams] is provided to safely handle this transformation using a shared controller,
+  /// ultimately overriding this method so you don't have to.
   /// 
   /// Should you choose pain and suffering and decide to replace this method anyway,
   /// study the default implementations of this class carefully. There are nuances to how this
   /// method is treated semantically. For example, the returned controller's stream 
   /// should not be listened to directly, as it is wrapped with a lifecycle-aware stream
   /// which is returned by this transformer.
-  StreamController<DestT> onBindDestController(Stream<SourceT> sourceStream, StreamControllerHandlers handlers) {
+  StreamController<DestT> onBindDestController(Stream<SourceT> sourceStream, StreamControllerHandlers handlers, {bool? useSyncControllers}) {
     if (sourceStream.isBroadcast) {
       return StreamController.broadcast(
         onListen: handlers.listen,
         onCancel: handlers.cancel,
+        sync: useSyncControllers ?? true,
       );
     } else {
       return StreamController(
@@ -128,6 +137,7 @@ abstract base class StreamLifecycleTransformer<SourceT, DestT> implements Stream
         onPause: handlers.pause,
         onResume: handlers.resume,
         onCancel: handlers.cancel,
+        sync: useSyncControllers ?? true,
       );
     }
   }

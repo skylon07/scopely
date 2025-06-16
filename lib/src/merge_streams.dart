@@ -272,7 +272,7 @@ final class _MergeStreamsTransformer<SourceT> extends StreamLifecycleTransformer
   late final StreamControllerHandlers handlers;
 
   @override
-  StreamController onBindDestController(Stream<SourceT> sourceStream, StreamControllerHandlers handlers) {
+  StreamController onBindDestController(Stream<SourceT> sourceStream, StreamControllerHandlers handlers, {bool? useSyncControllers}) {
     manager.addHandlers(sourceStream, handlers);
     this.handlers = handlers;
     return manager.sharedDestController;

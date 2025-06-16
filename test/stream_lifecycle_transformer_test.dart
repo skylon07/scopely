@@ -435,7 +435,7 @@ final class IntToStringTransformer extends StreamLifecycleTransformer<int, Strin
 final class SpyTransformer extends StreamLifecycleTransformer {
   int onBindDestControllerCalls = 0;
   @override
-  StreamController onBindDestController(Stream sourceStream, StreamControllerHandlers handlers) {
+  StreamController onBindDestController(Stream sourceStream, StreamControllerHandlers handlers, {bool? useSyncControllers}) {
     onBindDestControllerCalls++;
     return super.onBindDestController(sourceStream, handlers);
   }
