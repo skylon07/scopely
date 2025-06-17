@@ -286,4 +286,4 @@ Ultimately, it just gives you more fine-grained flow control for a stream's even
 
 ## Additional information
 
-File bugs or feature requests on the [issues page](https://github.com/skylon07/scopely/issues). Hope this little tool is helpful to you!
+File bugs or feature requests on the [issues page](https://github.com/skylon07/scopely/issues). Hope these tools are helpful to you!
