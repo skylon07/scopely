@@ -1,8 +1,8 @@
-/// Enhances dart's `async`/`await` model with some structured concurrency tools.
+/// Enhances Dart's `async`/`await` model with some structured concurrency tools.
 ///
 /// This library is centered around [AsyncScope], a utility for running asynchronous tasks
 /// as a cancelable group. It enables patterns where task lifecycles can be seamlessly
-/// and efficiently tied to external lifecycles (such as flutter `State`s) to handle
+/// and efficiently tied to external lifecycles (such as Flutter `State`s) to handle
 /// cleanup automatically.
 ///
 /// Additional utilities include:
@@ -13,7 +13,7 @@
 ///   Useful for event-level error handling in `await for` loops.
 ///
 /// These tools work independently but are designed to compose well with existing
-/// dart code, offering a more robust and maintainable approach to async programming.
+/// Dart code, offering a more robust and maintainable approach to async programming.
 library;
 
 export 'src/async_scope.dart';

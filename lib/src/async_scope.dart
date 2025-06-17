@@ -13,7 +13,7 @@ import 'package:scopely/src/stream_lifecycle_transformer.dart';
 /// 
 /// [AsyncScope] was designed with custom lifecycles in mind. They seamlessly integrate
 /// into whatever architecture you might already have. For example, to integrate [AsyncScope]
-/// into your flutter `State`s, you could create a simple mixin
+/// into your Flutter `State`s, you could create a simple mixin
 /// 
 /// ```dart
 /// import 'package:flutter/widgets.dart';
@@ -68,7 +68,7 @@ import 'package:scopely/src/stream_lifecycle_transformer.dart';
 /// You may decide to use [catchCancellations] or [catchAllCancellations] to cleanly
 /// filter these errors out. The quickest way to do this universally is to wrap
 /// the entire body of `main()` with [catchAllCancellations], or just `runApp()`
-/// if you're using flutter. 
+/// if you're using Flutter. 
 /// 
 /// See [bindFuture] and [bindStream] for more details on how their respective tasks
 /// are canceled and the behaviors you can expect from cancellations.
@@ -92,7 +92,7 @@ class AsyncScope {
   /// Takes the given [future] and returns a new "bound" future equivalent to the original.
   /// Awaiting bound futures allow for cancelable tasks to be constructed.
   /// 
-  /// In dart, [Future]s are not built to be cancelable operations. It would be a mistake
+  /// In Dart, [Future]s are not built to be cancelable operations. It would be a mistake
   /// to assume this function is capable of changing this behavior. Rather, this function
   /// *circumvents* this behavior by throwing an internal [TaskCancellationException]
   /// which enables scopes to "cancel" their bound futures.
@@ -126,7 +126,7 @@ class AsyncScope {
   /// language-level support or a custom async system (not `Future`/`Stream`-based)
   /// used consistently across your project. Instead, [AsyncScope] intends to provide
   /// a simple and lightweight API, one that
-  /// - works with dart's native `async`/`await` syntaxes
+  /// - works with Dart's native `async`/`await` syntaxes
   /// - can integrate easily with existing libraries and async workflows
   /// - can be adopted incrementally
   Future<ResultT> bindFuture<ResultT>(Future<ResultT> future) => 
@@ -161,9 +161,9 @@ class AsyncScope {
   /// 
   /// Any futures from [bindFuture] or streams from [bindStream] are tracked by this scope.
   /// Calling this function causes all of them to immediately throw a [TaskCancellationException].
-  /// This exception prevents dart from continuing their async execution.
+  /// This exception prevents them from continuing their execution.
   /// 
-  /// Although most errors/events in dart are handled asynchronously, this cancellation
+  /// Although most errors/events in Dart are handled asynchronously, this cancellation
   /// operation is an exception (pun absolutely intended). This means normally,
   /// a sort of "async contract" is promised with the timing of async operations.
   /// This means code like:
@@ -182,7 +182,7 @@ class AsyncScope {
   /// 
   /// However, if [cancelAll] were to follow this pattern, then tasks, while unlikely,
   /// *could* still run after the scope is canceled. This breaks [AsyncScope]'s contract
-  /// of its lifecycle being *equivalent* to some other lifecycle (like a flutter `State`;
+  /// of its lifecycle being *equivalent* to some other lifecycle (like a Flutter `State`;
   /// if it's disposed, the scope should not run tasks). So instead, [cancelAll]
   /// processes cancellations synchronously, which *technically* violates that "async contract".
   /// What this really means is code like:

@@ -7,8 +7,8 @@ environment:
   sdk: ^3.7.2
 
 dependencies:
-  # should NOT depend on flutter or flutter-dependent packages;
-  # this package should be usable by pure dart applications
+  # should NOT depend on Flutter or Flutter-dependent packages;
+  # this package should be usable by pure Dart applications
   # flutter: ...
 
 dev_dependencies:
