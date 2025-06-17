@@ -27,18 +27,6 @@ void main() {
         }, returnsNormally);
       });
 
-      test("does not catch cancellation exceptions from another scope", () async {
-        var scope2 = AsyncScope();
-
-        expect(() async {
-          await scope.catchCancellations(() async {
-            var future = scope2.bindFuture(Future.value());
-            scope2.cancelAll();
-            await future;
-          });
-        }, throwsA(isA<TaskCancellationException>()));
-      });
-
       test("catches cancellation exceptions from all scopes (when using the static method)", () async {
         var scope2 = AsyncScope();
 
@@ -51,6 +39,20 @@ void main() {
             await Future.wait([future1, future2]);
           });
         }, returnsNormally);
+      });
+
+      test("does not catch cancellation exceptions from another scope", () async {
+        var scope2 = AsyncScope();
+
+        AsyncScope.catchAllCancellations(() {
+          expect(() async {
+            await scope.catchCancellations(() async {
+              var future = scope2.bindFuture(Future.value());
+              scope2.cancelAll();
+              await future;
+            });
+          }, throwsA(isA<TaskCancellationException>()));
+        });
       });
 
       test("completes when the async task completes", () async {
@@ -201,7 +203,45 @@ void main() {
           ],
         );
 
-        expect(taskResults, [1, 2]);
+        expect(taskResults, ["await 0", "continue 0", "await 1"]);
+      });
+
+      test("ensures futures can't complete normally/process more data after the scope is canceled", () async {
+        var cancellationChecks = [];
+        
+        // schedule microtasks so future1 *barely* beats the cancellation, which *barely* beats future2
+        var future1 = scope.catchCancellations(() async {
+          cancellationChecks.add(scope.isCanceled);
+          await scope.bindFuture(completer.future);
+          cancellationChecks.add(scope.isCanceled);
+        });
+        completer.future.then((_) => scope.cancelAll());
+        var future2 = scope.catchCancellations(() async {
+          cancellationChecks.add(scope.isCanceled);
+          await scope.bindFuture(completer.future);
+          cancellationChecks.add(scope.isCanceled);
+        });
+        await Future.delayed(Duration.zero);
+
+        completer.complete();
+        await Future.wait([
+          future1,
+          future2,
+        ]);
+
+        // even though future 1 beat the race, it should still never run *after* cancelation
+        // (aka should never see the scope in a canceled state)
+        expect(cancellationChecks, everyElement(false));
+      });
+
+      test("ensure canceling immediately after binding a future doesn't cause internal errors", () async {
+        expect(() async {
+          scope.catchCancellations(() {
+            scope.bindFuture(completer.future);
+          });
+          scope.cancelAll();
+          completer.complete();
+        }, returnsNormally);
       });
     });
 
@@ -241,7 +281,34 @@ void main() {
           ],
         );
 
-        expect(taskResults, [1, 2]);
+        expect(taskResults, ["await 0", "continue 0", "await 1"]);
+      });
+
+      test("ensures streams won't process any data events after the scope is canceled", () async {
+        var completer = Completer();
+        var cancellationChecks = [];
+        
+        var catchFuture = scope.catchCancellations(() async {
+          await for (var _ in scope.bindStream(controller.stream)) {
+            cancellationChecks.add(scope.isCanceled);
+          }
+        });
+        controller.add("event1"); // just to make sure listening is set up correctly
+        // schedule microtasks so event2 *barely* beats the cancellation, which *barely* beats event3
+        completer.future.then((_) => controller.add("event2"));
+        completer.future.then((_) => scope.cancelAll());
+        completer.future.then((_) => controller.add("event3"));
+
+        completer.complete();
+        await Future.wait([
+          catchFuture,
+          completer.future,
+        ]);
+
+        // even though future 1 beat the race, it should still never run *after* cancelation
+        // (aka should never see the scope in a canceled state)
+        expect(cancellationChecks, everyElement(false));
+        expect(cancellationChecks, isNotEmpty);
       });
 
       test("throws when listening to a stream bound to a single-subscription stream that is already listened to", () async {
@@ -291,8 +358,8 @@ void main() {
           ],
         );
 
-        expect(task1Results, [1, 2]);
-        expect(task2Results, [1, 2]);
+        expect(task1Results, ["await 0", "continue 0", "await 1"]);
+        expect(task2Results, ["await 0", "continue 0", "await 1"]);
         expect(scope.isCanceled, true);
         expect(child1.isCanceled, true);
         expect(child2.isCanceled, true);
@@ -318,7 +385,7 @@ void main() {
           ],
         );
 
-        expect(taskResults, [1, 2]);
+        expect(taskResults, ["await 0", "continue 0", "await 1", "continue 1"]);
         expect(scope.isCanceled, false);
         expect(child1.isCanceled, true);
       });
@@ -349,17 +416,20 @@ void main() {
       var child3 = AsyncScope();
       var completer = Completer();
 
-      var future1 = scope.bindFuture(completer.future);
-      var future2 = scope2.bindFuture(completer.future);
-      var future3 = child3.bindFuture(future1);
+      expect(
+        () async => await scope.bindFuture(completer.future),
+        throwsA(isA<TaskCancellationException>()),
+      );
+      expect(
+        () async => await scope2.bindFuture(completer.future),
+        returnsNormally,
+      );
+      expect(
+        () async => await child3.bindFuture(scope.bindFuture(completer.future)),
+        throwsA(isA<TaskCancellationException>()),
+      );
 
       scope.cancelAll();
-
-      completer.complete();
-
-      expect(future1, throwsA(isA<TaskCancellationException>()));
-      expect(future2, completes);
-      expect(future3, throwsA(isA<TaskCancellationException>()));
     });
   });
 
@@ -386,8 +456,9 @@ Future<void> runFutureTask({
 }) async {
   Future<void> asyncTask() async {
     for (var (idx, delayer) in delayers.indexed) {
-      resultsList.add(idx + 1);
-      await delayer.future;
+      resultsList.add("await $idx");
+      await scope.bindFuture(delayer.future);
+      resultsList.add("continue $idx");
     }
   }
   
@@ -402,8 +473,9 @@ Future<void> runStreamTask({
   Future<void> asyncTask() async {
     var stream = () async* {
       for (var (idx, delayer) in delayers.indexed) {
-        yield idx + 1;
-        await delayer.future;
+        yield "await $idx";
+        await delayer.future; // this is intentionally not a bound future
+        yield "continue $idx";
       }
     }();
 
