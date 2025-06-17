@@ -6,11 +6,9 @@
 /// cleanup automatically.
 ///
 /// Additional utilities include:
-/// - `StreamLifecycleTransformer`: A [StreamTransformer] that provides several hooks
-///   to augment a stream's lifecycle without the boilerplate of using a [StreamController].
-/// - `mergeStreams`: Combines multiple streams into a single stream of synchronized lists.
-/// - `Stream.asFutures`: Converts a stream into a list of futures, one for each event.
-///   Useful for event-level error handling in `await for` loops.
+/// - `StreamLifecycleTransformer`: Add custom hooks to a `StreamController`-like interface without all the boilerplate.
+/// - `mergeStreams`: Combine multiple streams into a single stream with a collective output.
+/// - `Stream.asFutures`: Turn a stream into a list of futures for an improved error handling experience.
 ///
 /// These tools work independently but are designed to compose well with existing
 /// Dart code, offering a more robust and maintainable approach to async programming.
