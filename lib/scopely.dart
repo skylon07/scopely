@@ -1,4 +1,4 @@
-/// Enhances Dart's `async`/`await` model with some structured concurrency tools.
+/// Enhances Dart's `async`/`await` model with structured concurrency utilities.
 ///
 /// This library is centered around [AsyncScope], a utility for running asynchronous tasks
 /// as a cancelable group. It enables patterns where task lifecycles can be seamlessly
