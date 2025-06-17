@@ -164,9 +164,9 @@ class AsyncScope {
   /// This exception prevents them from continuing their execution.
   /// 
   /// Although most errors/events in Dart are handled asynchronously, this cancellation
-  /// operation is an exception (pun absolutely intended). This means normally,
-  /// a sort of "async contract" is promised with the timing of async operations.
-  /// This means code like:
+  /// operation is an exception (pun absolutely intended). [cancelAll] *intentionally*
+  /// violates an "async contract" that Dart normally promises by performing cancellation tasks 
+  /// *synchronously*. As an example, normally async code like:
   /// 
   /// ```dart
   /// someFuture.then((_) => print(2));
@@ -180,12 +180,12 @@ class AsyncScope {
   /// 2
   /// ```
   /// 
-  /// However, if [cancelAll] were to follow this pattern, then tasks, while unlikely,
-  /// *could* still run after the scope is canceled. This breaks [AsyncScope]'s contract
-  /// of its lifecycle being *equivalent* to some other lifecycle (like a Flutter `State`;
+  /// However, if [cancelAll] were to follow this pattern, then tasks *could* (although unlikely)
+  /// still run after the scope is canceled. This would prevent [AsyncScope]'s intended
+  /// lifecycle behavior from being equivalent to some other lifecycle (like a Flutter `State`;
   /// if it's disposed, the scope should not run tasks). So instead, [cancelAll]
-  /// processes cancellations synchronously, which *technically* violates that "async contract".
-  /// What this really means is code like:
+  /// works synchronously to provide a much stronger lifecycle contract at the cost of 
+  /// *technically* providing "invalid" async behavior. What this really means is code like:
   /// 
   /// ```dart
   /// scope.bindFuture(someFuture).catchError((_) => print(2));
@@ -200,8 +200,10 @@ class AsyncScope {
   /// 1
   /// ```
   /// 
-  /// The good news: it's easy to avoid situations like this. Just make sure
-  /// [cancelAll] is never called synchronously after [bindFuture] or [bindStream].
+  /// In practice though, this almost certainly won't cause you any issues.
+  /// It's very easy to avoid situations like this: just make sure
+  /// [cancelAll] is never called synchronously after [bindFuture] or [bindStream],
+  /// and all the expected async behaviors are preserved.
   void cancelAll() async {
     for (var task in _tasksToCancel) {
       task.cancel();
