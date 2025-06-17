@@ -125,7 +125,12 @@ abstract class _CancelableTask<DelegateT> {
 }
 
 final class _FutureTask<ResultT> extends _CancelableTask<Future<ResultT>> {
-  final _boundCompleter = Completer<ResultT>();
+  // a sync controller must be used to prevent this race condition:
+  // - The task waits for the delegate, which completes
+  // - The completion of the bound future is scheduled in the next microtask (should run now instead!)
+  // - The scope cancels
+  // - The completion runs in a now invalid state (should have run earlier!)
+  final _boundCompleter = Completer<ResultT>.sync();
 
   _FutureTask(super.owner, super.delegate);
 
@@ -187,7 +192,7 @@ final class _StreamTaskTransformer<EventT> extends StreamLifecycleTransformer<Ev
 
   @override
   StreamController<EventT> onBindDestController(Stream<EventT> sourceStream, StreamControllerHandlers handlers, {bool? useSyncControllers}) {
-    var controller = super.onBindDestController(sourceStream, handlers);
+    var controller = super.onBindDestController(sourceStream, handlers, useSyncControllers: true);
     boundController = controller;
     return controller;
   }
