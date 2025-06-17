@@ -1,38 +1,20 @@
-/// Support for lightweight scopes to manage asynchronous tasks.
-/// 
-/// `Future`s and `Stream`s are the building blocks for async programming in dart.
-/// However, care must be taken to ensure resources aren't unnecessarily wasted.
-/// [AsyncScope]s provide a way to "scope" asynchronous tasks so they can be
-/// canceled and cleaned up later.
-/// 
-/// You can decide if you want to create `AsyncScope` directly...
+/// Enhances dart's `async`/`await` model with some structured concurrency tools.
 ///
-/// ```dart
-/// import 'package:scopely/scopely.dart';
+/// This library is centered around [AsyncScope], a utility for running asynchronous tasks
+/// as a cancelable group. It enables patterns where task lifecycles can be seamlessly
+/// and efficiently tied to external lifecycles (such as flutter `State`s) to handle
+/// cleanup automatically.
 ///
-/// mixin CustomScopingHook on MyTypeWithCleanup {
-///   final scope = AsyncScope();
+/// Additional utilities include:
+/// - `StreamLifecycleTransformer`: A [StreamTransformer] that provides several hooks
+///   to augment a stream's lifecycle without the boilerplate of using a [StreamController].
+/// - `mergeStreams`: Combines multiple streams into a single stream of synchronized lists.
+/// - `Stream.asFutures`: Converts a stream into a list of futures, one for each event.
+///   Useful for event-level error handling in `await for` loops.
 ///
-///   @override
-///   void onCleanup() {
-///     super.onCleanup();
-///     scope.cancelAll();
-///   }
-/// }
-/// ```
-///
-/// ...or use one of the package's predefined hooks.
-///
-/// ```dart
-/// import 'package:scopely/hooks/flutter.dart';
-///
-/// class CustomState extends State<CustomWidget> with StateScoping {
-///     // StateScoping exposes `AsyncScope scope` to this widget state
-/// }
-/// ```
+/// These tools work independently but are designed to compose well with existing
+/// dart code, offering a more robust and maintainable approach to async programming.
 library;
-
-// TODO: fix the above comment -- it's outdated (particularly the scopely/hooks/flutter.dart part)
 
 export 'src/async_scope.dart';
 export 'src/merge_streams.dart';
