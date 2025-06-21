@@ -170,7 +170,7 @@ void main() {
       });
     });
 
-    group("from its future-related behaviors", () {
+    group("using its future-related behaviors", () {
       late Completer completer;
 
       setUp(() {
@@ -245,7 +245,7 @@ void main() {
       });
     });
 
-    group("from its stream-related behaviors", () {
+    group("using its stream-related behaviors", () {
       late StreamController controller;
       
       setUp(() {  
@@ -330,7 +330,43 @@ void main() {
       });
     });
 
-    group("from its parent-child relationships", () {
+    group("using its general-purpose cancellation functionality", () {
+      test("can cancel arbitrary callbacks", () {
+        var removeListenerCalled = false;
+        void fakeRemoveListener() {
+          removeListenerCalled = true;
+        }
+
+        scope.addCancelableTask(fakeRemoveListener);
+
+        expect(removeListenerCalled, false);
+
+        scope.cancelAll();
+
+        expect(removeListenerCalled, true);
+      });
+
+      test("can run the cancellation early (but still only once!)", () {
+        var removeListenerCalledTimes = 0;
+        void fakeRemoveListener() {
+          removeListenerCalledTimes++;
+        }
+
+        var canceler = scope.addCancelableTask(fakeRemoveListener);
+
+        expect(removeListenerCalledTimes, 0);
+
+        canceler.cancelEarly();
+
+        expect(removeListenerCalledTimes, 1);
+
+        scope.cancelAll();
+        
+        expect(removeListenerCalledTimes, 1);
+      });
+    });
+
+    group("with its parent-child relationships", () {
       test("will cancel children scopes when canceled", () async {
         var completer1 = Completer();
         var completer2 = Completer();
