@@ -157,6 +157,9 @@ class AsyncScope {
   Stream<EventT> bindStream<EventT>(Stream<EventT> stream) =>
     _bindTask(_StreamTask(this, stream));
 
+  TaskCanceler addCancelableTask(void Function() onCancel) =>
+    _bindTask(_CustomCancelableTask(this, onCancel));
+
   /// Cancels all tasks bound to this scope immediately and synchronously.
   /// 
   /// Any futures from [bindFuture] or streams from [bindStream] are tracked by this scope.
@@ -367,9 +370,8 @@ extension StreamScoping<EventT> on Stream<EventT> {
 
 abstract class _CancelableTask<DelegateT> {
   final AsyncScope owner;
-  final DelegateT delegate;
 
-  _CancelableTask(this.owner, this.delegate);
+  _CancelableTask(this.owner);
 
   abstract final DelegateT boundDelegate;
   
@@ -385,7 +387,9 @@ final class _FutureTask<ResultT> extends _CancelableTask<Future<ResultT>> {
   // - The completion runs in a now invalid state (should have run earlier!)
   final _boundCompleter = Completer<ResultT>.sync();
 
-  _FutureTask(super.owner, super.delegate);
+  final Future<ResultT> _delegate;
+
+  _FutureTask(super.owner, this._delegate);
 
   @override
   late Future<ResultT> boundDelegate = _boundCompleter.future;
@@ -393,7 +397,7 @@ final class _FutureTask<ResultT> extends _CancelableTask<Future<ResultT>> {
   @override
   void bind(void Function() signalDelegateDone) async {
     try {
-      var result = await delegate;
+      var result = await _delegate;
       _attemptComplete(() => _boundCompleter.complete(result));
     } catch (error, stackTrace) {
       _attemptComplete(() => _boundCompleter.completeError(error, stackTrace));
@@ -415,17 +419,18 @@ final class _FutureTask<ResultT> extends _CancelableTask<Future<ResultT>> {
 }
 
 final class _StreamTask<EventT> extends _CancelableTask<Stream<EventT>> {
-  _StreamTask(super.owner, super.delegate);
+  final Stream<EventT> _delegate;
+
+  _StreamTask(super.owner, this._delegate);
 
   @override
-  late final Stream<EventT> boundDelegate;
+  late final Stream<EventT> boundDelegate = _delegate.transform(bindingTransformer);
 
   late final _StreamTaskTransformer<EventT> bindingTransformer;
 
   @override
   void bind(void Function() signalDelegateDone) async {
     bindingTransformer = _StreamTaskTransformer(owner, signalDelegateDone);
-    boundDelegate = delegate.transform(bindingTransformer);
   }
 
   @override
@@ -485,5 +490,35 @@ final class _StreamTaskTransformer<EventT> extends StreamLifecycleTransformer<Ev
       boundController.addError(TaskCancellationException._(owner));
       await boundController.close();
     }
+  }
+}
+
+class TaskCanceler {
+  final void Function() _cancelEarly;
+
+  TaskCanceler(this._cancelEarly);
+
+  void cancelEarly() => _cancelEarly();
+}
+
+class _CustomCancelableTask extends _CancelableTask<TaskCanceler> {
+  final void Function() _onCancel;
+
+  _CustomCancelableTask(super.scope, this._onCancel);
+
+  @override
+  late final TaskCanceler boundDelegate;
+
+  @override
+  void bind(void Function() signalDelegateDone) {
+    boundDelegate = TaskCanceler(() {
+      signalDelegateDone();
+      _onCancel();
+    });
+  }
+
+  @override
+  void cancel() {
+    _onCancel();
   }
 }
