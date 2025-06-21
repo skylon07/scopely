@@ -49,7 +49,7 @@ No further configuration needed!
 This is the biggest feature `scopely` has to offer. `AsyncScope`s allow you to take full control over your async task management, saving you time and effort when making sure streams (and even futures!) are cleaned up correctly.
 
 What `AsyncScope` **can** do:
-- ✅ easily convert any existing `Future` or `Stream` into a scope-bound, cancelable version
+- ✅ easily convert any existing `Future`, `Stream`, or callback/listener into a scope-bound, cancelable version
 - ✅ effortlessly introduce automatic task cleanup into any existing architecture, piecewise or from the ground up
 
 Here's a working example of a mixin that can be applied to your Flutter `State`s:
@@ -73,6 +73,8 @@ Using it is very straightforward, even if you're refactoring existing code!
 ```dart
 class _MyState extends State<MyWidget> with StateScoping {
   String data = "";
+  
+  final scrollController = ScrollController();
 
   @override
   void initState() {
@@ -82,6 +84,16 @@ class _MyState extends State<MyWidget> with StateScoping {
     scope.bindStream(someStream).listen((data) {
       // can use `data` with confidence this `State` is still active!
     });
+
+    void scrollListener() { /* ... */ }
+    scrollController.addListener(scrollListener);
+
+    // arbitrary cancellation tasks can be added
+    var cancelListener = scope.addCancelListener(() {
+      scrollController.removeListener(scrollListener);
+    });
+    // ...and called early if you want!
+    cancelListener.cancelEarly();
   }
 
   @override
