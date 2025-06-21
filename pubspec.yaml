@@ -1,6 +1,6 @@
 name: scopely
 description: Enhances Dart's async/await model with structured concurrency utilities.
-version: 1.0.0
+version: 1.1.0
 repository: https://github.com/skylon07/scopely
 
 environment:
