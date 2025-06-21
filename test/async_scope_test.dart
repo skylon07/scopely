@@ -331,28 +331,27 @@ void main() {
     });
 
     group("using its general-purpose cancellation functionality", () {
+      late int removeListenerCalledTimes;
+      void fakeRemoveListener() {
+        removeListenerCalledTimes++;
+      }
+
+      setUp(() {
+        removeListenerCalledTimes = 0;
+      });
+
       test("can cancel arbitrary callbacks", () {
-        var removeListenerCalled = false;
-        void fakeRemoveListener() {
-          removeListenerCalled = true;
-        }
+        scope.addCancelListener(fakeRemoveListener);
 
-        scope.addCancelableTask(fakeRemoveListener);
-
-        expect(removeListenerCalled, false);
+        expect(removeListenerCalledTimes, 0);
 
         scope.cancelAll();
 
-        expect(removeListenerCalled, true);
+        expect(removeListenerCalledTimes, 1);
       });
 
       test("can run the cancellation early (but still only once!)", () {
-        var removeListenerCalledTimes = 0;
-        void fakeRemoveListener() {
-          removeListenerCalledTimes++;
-        }
-
-        var canceler = scope.addCancelableTask(fakeRemoveListener);
+        var canceler = scope.addCancelListener(fakeRemoveListener);
 
         expect(removeListenerCalledTimes, 0);
 
@@ -360,7 +359,25 @@ void main() {
 
         expect(removeListenerCalledTimes, 1);
 
+        canceler.cancelEarly();
+        
+        expect(removeListenerCalledTimes, 1);
+        
         scope.cancelAll();
+
+        expect(removeListenerCalledTimes, 1);
+      });
+
+      test("won't run the cancellation callback multiple times if already canceled", () {
+        var canceler = scope.addCancelListener(fakeRemoveListener);
+
+        expect(removeListenerCalledTimes, 0);
+
+        scope.cancelAll();
+
+        expect(removeListenerCalledTimes, 1);
+
+        canceler.cancelEarly();
         
         expect(removeListenerCalledTimes, 1);
       });

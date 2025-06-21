@@ -157,7 +157,11 @@ class AsyncScope {
   Stream<EventT> bindStream<EventT>(Stream<EventT> stream) =>
     _bindTask(_StreamTask(this, stream));
 
-  TaskCanceler addCancelableTask(void Function() onCancel) =>
+  /// Adds a callback [onCancel] to run when this scope is canceled. Once registered,
+  /// the callback should not be invoked directly. Doing so might result in the callback
+  /// being run more times than expected. To run [onCancel] early, using the returned
+  /// [CancelListener.cancelEarly] method instead.
+  CancelListener addCancelListener(void Function() onCancel) =>
     _bindTask(_CustomCancelableTask(this, onCancel));
 
   /// Cancels all tasks bound to this scope immediately and synchronously.
@@ -493,25 +497,39 @@ final class _StreamTaskTransformer<EventT> extends StreamLifecycleTransformer<Ev
   }
 }
 
-class TaskCanceler {
+/// A handle to a manually added cancellation task allowing you to cancel it early.
+class CancelListener {
+  final AsyncScope _scope;
   final void Function() _cancelEarly;
 
-  TaskCanceler(this._cancelEarly);
+  CancelListener(this._scope, this._cancelEarly);
 
-  void cancelEarly() => _cancelEarly();
+  var _hasCanceledEarly = false;
+
+  /// Performs the cancellation early and removes it from the scope's pending cancellation tasks.
+  /// 
+  /// Calling this method ensures the bound cancellation callback will only be run once,
+  /// and not again if the underlying [AsyncScope] cancels (or is already canceled).
+  /// Canceling early has no effect on the underlying scope or its other cancellation tasks.
+  void cancelEarly() {
+    if (!_scope._isCanceled && !_hasCanceledEarly) {
+      _hasCanceledEarly = true;
+      _cancelEarly();
+    }
+  }
 }
 
-class _CustomCancelableTask extends _CancelableTask<TaskCanceler> {
+class _CustomCancelableTask extends _CancelableTask<CancelListener> {
   final void Function() _onCancel;
 
-  _CustomCancelableTask(super.scope, this._onCancel);
+  _CustomCancelableTask(super.owner, this._onCancel);
 
   @override
-  late final TaskCanceler boundDelegate;
+  late final CancelListener boundDelegate;
 
   @override
   void bind(void Function() signalDelegateDone) {
-    boundDelegate = TaskCanceler(() {
+    boundDelegate = CancelListener(owner, () {
       signalDelegateDone();
       _onCancel();
     });
