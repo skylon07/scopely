@@ -73,8 +73,6 @@ Using it is very straightforward, even if you're refactoring existing code!
 ```dart
 class _MyState extends State<MyWidget> with StateScoping {
   String data = "";
-  
-  final scrollController = ScrollController();
 
   @override
   void initState() {
@@ -86,11 +84,11 @@ class _MyState extends State<MyWidget> with StateScoping {
     });
 
     void scrollListener() { /* ... */ }
-    scrollController.addListener(scrollListener);
+    widget.scrollController.addListener(scrollListener);
 
     // arbitrary cancellation tasks can be added
     var cancelListener = scope.addCancelListener(() {
-      scrollController.removeListener(scrollListener);
+      widget.scrollController.removeListener(scrollListener);
     });
     // ...and called early if you want!
     cancelListener.cancelEarly();
