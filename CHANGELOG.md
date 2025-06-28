@@ -1,3 +1,7 @@
+## 1.1.1
+
+- Added an example showing how to use `AsyncScope` with Flutter `State`s
+
 ## 1.1.0
 
 - Added `AsyncScope.addCancelListener()`
