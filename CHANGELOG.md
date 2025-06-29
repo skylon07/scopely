@@ -1,5 +1,9 @@
 ## 1.1.2
 
+- Condense example files so pub.dev shows it all on one page
+
+## 1.1.2
+
 - Added a top-level example file to let pub.dev see it
 
 ## 1.1.1
