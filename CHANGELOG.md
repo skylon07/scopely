@@ -1,3 +1,7 @@
+## 1.1.2
+
+- Added a top-level example file to let pub.dev see it
+
 ## 1.1.1
 
 - Added an example showing how to use `AsyncScope` with Flutter `State`s
