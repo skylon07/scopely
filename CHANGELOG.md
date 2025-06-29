@@ -1,4 +1,4 @@
-## 1.1.2
+## 1.1.3
 
 - Condense example files so pub.dev shows it all on one page
 
