@@ -1,3 +1,7 @@
+## 1.1.4
+
+- Tweak documentation regarding the example Flutter State mixin
+
 ## 1.1.3
 
 - Condense example files so pub.dev shows it all on one page
