@@ -18,7 +18,7 @@ import 'package:scopely/src/stream_lifecycle_transformer.dart';
 /// ```dart
 /// import 'package:flutter/widgets.dart';
 /// 
-/// mixin StateScoping on State {
+/// mixin StateScope on State {
 ///   final scope = AsyncScope();
 /// 
 ///   @override
@@ -32,7 +32,7 @@ import 'package:scopely/src/stream_lifecycle_transformer.dart';
 /// which is very straightforward to use, even if you're refactoring existing code!
 /// 
 /// ```dart
-/// class _MyState extends State<MyWidget> with StateScoping {
+/// class _MyState extends State<MyWidget> with StateScope {
 ///   String data = "";
 /// 
 ///   @override

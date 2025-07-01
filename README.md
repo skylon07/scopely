@@ -57,7 +57,7 @@ Here's a working example of a mixin that can be applied to your Flutter `State`s
 ```dart
 import 'package:flutter/widgets.dart';
 
-mixin StateScoping on State {
+mixin StateScope on State {
   final scope = AsyncScope();
 
   @override
@@ -71,7 +71,7 @@ mixin StateScoping on State {
 Using it is very straightforward, even if you're refactoring existing code!
 
 ```dart
-class _MyState extends State<MyWidget> with StateScoping {
+class _MyState extends State<MyWidget> with StateScope {
   String data = "";
 
   @override

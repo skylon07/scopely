@@ -13,7 +13,7 @@ void main() {
 /// An example of how to tie an [AsyncScope] to a Flutter `State`.
 /// This class holds all the magic of automating task cleanup.
 /// As you can see, it's pretty minimal!
-mixin StateScoping on State {
+mixin StateScope on State {
   final scope = AsyncScope();
 
   @override
@@ -28,7 +28,7 @@ mixin StateScoping on State {
 /// An example implementation of a custom state *with* the [AsyncScope] mixed in.
 /// At this point, everything is handled behind the scenes. All you'd need to do
 /// is bind your async tasks to the [scope]!
-class MyState extends State with StateScoping {
+class MyState extends State with StateScope {
   final notifier = MyChangeNotifier();
 
   @override
