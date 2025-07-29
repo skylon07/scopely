@@ -1,3 +1,7 @@
+## 1.1.5
+
+- Add a missing import in `mixin StateScope` code snippets
+
 ## 1.1.4
 
 - Tweak documentation regarding the example Flutter State mixin
