@@ -1,3 +1,7 @@
+## 1.1.6
+
+- Fix compilation errors in `mixin StateScope` code snippets for newer versions of Flutter 
+
 ## 1.1.5
 
 - Add a missing import in `mixin StateScope` code snippets
