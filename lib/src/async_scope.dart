@@ -17,6 +17,7 @@ import 'package:scopely/src/stream_lifecycle_transformer.dart';
 /// 
 /// ```dart
 /// import 'package:flutter/widgets.dart';
+/// import 'package:scopely/scopely.dart';
 /// 
 /// mixin StateScope on State {
 ///   final scope = AsyncScope();

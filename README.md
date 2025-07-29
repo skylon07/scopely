@@ -56,6 +56,7 @@ Here's a working example of a mixin that can be applied to your Flutter `State`s
 
 ```dart
 import 'package:flutter/widgets.dart';
+import 'package:scopely/scopely.dart';
 
 mixin StateScope on State {
   final scope = AsyncScope();
