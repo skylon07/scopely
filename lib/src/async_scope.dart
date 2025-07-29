@@ -19,7 +19,7 @@ import 'package:scopely/src/stream_lifecycle_transformer.dart';
 /// import 'package:flutter/widgets.dart';
 /// import 'package:scopely/scopely.dart';
 /// 
-/// mixin StateScope on State {
+/// mixin StateScope<WidgetT extends StatefulWidget> on State<WidgetT> {
 ///   final scope = AsyncScope();
 /// 
 ///   @override
