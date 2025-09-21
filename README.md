@@ -1,6 +1,6 @@
 # scopely
 
-Enhances Dart's `async`/`await` model with structured concurrency utilities.
+Provides tools to let you enhance Dart's `async`/`await` model the way you want to.
 
 - [scopely](#scopely)
   - [Motivation](#motivation)
@@ -16,19 +16,19 @@ Enhances Dart's `async`/`await` model with structured concurrency utilities.
 
 ## Motivation
 
-This package is loosely inspired by Android's coroutine scopes. Dart's concurrency model is intentionally less structured, allowing libraries to design their own architectures for managing asynchronous tasks. This package provides an easy way to group async tasks together and tie them into arbitrary lifecycles, enabling automatic and reliable cleanup.
+Dart's concurrency model is intentionally less structured, allowing libraries to design their own architectures for managing asynchronous tasks. However, designing your own tooling around this can be cumbersome and come with some boilerplate. This package provides an easy way to design your `async`/`await` experience the way you see fit.
 
 
 ## Features
 
-This library is centered around `AsyncScope`, a utility for running asynchronous tasks as a cancelable group. It enables patterns where task lifecycles can be seamlessly and efficiently tied to external lifecycles (such as Flutter `State`s) to handle cleanup automatically.
+The primary feature of this library is `AsyncScope`, a utility for running asynchronous tasks as a cancelable group. This is loosely inspired by Android's coroutine scopes. It enables patterns where task lifecycles can be seamlessly and efficiently tied to external lifecycles (such as Flutter `State`s) to handle cleanup automatically.
 
 Additional utilities include:
 - `StreamLifecycleTransformer`: Add custom hooks to a `StreamController`-like interface without all the boilerplate.
 - `mergeStreams`: Combine multiple streams into a single stream with a collective output.
 - `Stream.asFutures`: Turn a stream into a list of futures for an improved error handling experience.
 
-These tools work independently but are designed to compose well with existing Dart code, offering a more robust and maintainable approach to async programming.
+These tools work independently but are designed to compose well with existing Dart code, making refactors as easy and robust as possible.
 
 
 ## Getting started
