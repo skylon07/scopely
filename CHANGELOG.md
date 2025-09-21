@@ -1,3 +1,7 @@
+## 1.1.7
+
+- Update README to be a little more tooling-focused.
+
 ## 1.1.6
 
 - Fix compilation errors in `mixin StateScope` code snippets for newer versions of Flutter 
