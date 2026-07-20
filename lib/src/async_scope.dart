@@ -165,6 +165,14 @@ class AsyncScope {
   CancelListener addCancelListener(void Function() onCancel) =>
     _bindTask(_CustomCancelableTask(this, onCancel));
 
+  /// Takes a function [task] which returns a callback to cancel it.
+  /// [task] is run immediately and the callback is stored as a
+  /// cancelation listener via [addCancelListener].
+  void bindCancelableTask(void Function() Function() task) {
+    var cancelListener = task();
+    addCancelListener(cancelListener);
+  }
+
   /// Cancels all tasks bound to this scope immediately and synchronously.
   /// 
   /// Any futures from [bindFuture] or streams from [bindStream] are tracked by this scope.

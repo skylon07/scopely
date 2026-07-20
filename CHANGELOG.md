@@ -1,3 +1,7 @@
+## 1.1.8
+
+- Add a small QOL helper function to AsyncScope.
+
 ## 1.1.7
 
 - Update README to be a little more tooling-focused.
